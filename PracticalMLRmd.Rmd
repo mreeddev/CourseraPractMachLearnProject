@@ -1,0 +1,168 @@
+Practical Machine Learning Prediction Model Assignment
+======================================================
+## Detect Deviation in Execution of Physical Exercises
+
+Run code in background (hidden). Code is available in Appendix B
+```{r echo=FALSE}
+setwd("C:\\_Coursera\\PractMLProject");
+rm(list=ls());
+library(utils);library(caret); 
+
+d.training <- read.csv("pml-training.csv", na.strings = c("NA","NaN"," ","","#DIV/0!"));
+d.testing <- read.csv("pml-testing.csv", na.strings = c("NA","NaN"," ","","#DIV/0!"));
+
+d.trainna <- d.training[ d.training == 'NA'] <- NA
+
+d.naind <- which(colSums(is.na(d.training))!=0)
+
+d.train <- d.training[ , -d.naind]
+d.train <- d.train[,-c(1:7)];
+
+d.test <- d.testing[ , -d.naind]
+d.test <- d.test[,-c(1:7)];
+
+set.seed(13287);
+d.ptrain <- createDataPartition (y = d.train$classe, p = .7, list = FALSE);
+d.itrain <- d.train[d.ptrain, ];
+d.vtrain <- d.train[-d.ptrain, ];
+
+m.rf <- train(classe ~., data = d.itrain, method = "rf", preprocess = c("center","scale"),ntree = 10, tuneLength = 1, prox = TRUE);
+
+m.cf <- confusionMatrix(predict(m.rf, d.vtrain), d.vtrain$classe);
+
+m.pt <- predict(m.rf, d.test);
+
+
+```
+## Synopsis
+The goal of this project is to create a data mining model that can predict the accuracy, and presumed quality, of various physical exercises. Test data is derived from exercises performed by a group of 6 generally non-athletic participants, performing barbell lifts in 5 different ways, one of which is indicated as "correct", 4 of which are indicated as "incorrect" as a result of a deliberate deviation from the form defined by professional athletic trainers as "correct". The participants were fitted with three-axis sensors on the belt, forearm, arm, and dumbell. Output of the sensors was recorded as the exercises were executed.
+
+Six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions.
+Class A corresponds to the specified execution of the exercise, while the other 4 classes correspond to common mistakes. 
+Class A: Exactly according to the specification.
+Class B: Throwing the elbows to the front.
+Class C: Lifting the dumbbell only halfway.
+Class D: Lowering the dumbbell only halfway.
+Class E: Throwing the hips to the front.
+
+Participants were supervised by an experienced weight lifter to make sure the execution complied to the manner they were supposed to simulate. 
+The exercises were performed by six male participants aged between 20-28 years, with little weight lifting experience. 
+
+Data for this project was obtained from the "Wearable Computing: Accelerometers' Data Classification of Body Postures and Movements" study conducted by the Human Activity Research group. Data and more information is available on their website at: http://groupware.les.inf.puc-rio.br/har
+
+## Data Exploration
+Two sets of data are provided by the HAR group, one for training containing 19622 observations of 160 variables, and one for testing containing 20 observations of 160 variables. A quick analysis (via the summary() and str() functions) of the training data revealed a number of columns that had empty strings and NA values, and, in some cases, an extremely high count of NAs. Variables containing a low number of unique values do little more than get in the way and increase processing time so I calculated the percentage of NA values compared to the total number of observations, rounded down a percent for leniency, and arrived at a figure of 95% NAs as the threshold for removing a variable from the training data. It is possible that the few hundred non-NA values could have a positive impact on the overal model accuracy so, if the model's accuracy is insufficient to correctly predict the classes of the test data, I will revisit this decision.
+The training data was divided into a random 70% set for model training and a 30% set for cross-validating the model. The final training data set consists of 13737 observations of 60 variables. The cross-validation data set consists of 5885 observations of 60 variables.
+Due to the large number of variables I have deliberately limited the graphics in this analysis. Selection of variables to display would be totally random and somewhat meaningless without visualization of all variables in the same manner.
+
+## Model Selection
+As this is generally a "classification" exercise, I chose to use a Random Forest algorithm to create the final mining model. I used the "caret" package as it combines a lot of analytics functionality into a very small amount of coding and provides a large result set by which to evaluate the model accuracy. Given the number of observations, I chose to set the optional parameters fairly low to keep the processing time short. I will revisit this decision if the accuracy of the model is impacted.
+
+## Model Evaluation and Cross-validation
+### Model Evaluation
+The "train" function of the "caret" package completes in relative short order and provides the output shown in the figure below. The Accuracy is quite high and the Accuracy Standard Deviation is quite low indicating the model fit the training sample well.
+
+### Figure 1. Model Fit Results
+These results indicate a perfect fit (Accuracy = 1) and a very low standard of deviation (Accuracy SD = 0.002). "Perfect" always raises suspicion so I will be watching for errors in the prediction using the testing data.
+```{r echo=FALSE}
+m.rf
+```
+### Model Cross-validation
+Cross validation prediction was run on the cross-validation data set using the Random Forest model trained on the training data set. The results are quite good, indicated by the small number of out-of-sample errors in the exercise Classes and Accuracy at 0.991, very slightly below the model fit results. This is likely due to the stringent oversight of the study participants while performing the exercises, creating a clear distinction between the "correct" method and the "incorrect" methods.
+
+### Figure 2. Cross-Validation Results
+Confusion Matrix using the Random Forest predition model and the cross-validation training data set
+```{r echo=FALSE}
+m.cf 
+```
+
+## Prediction on Test Data Set
+The Random Forest prediction model was used to predict the "Class" of each of the 20 data samples in the Testing data set. All samples resulted in a single Class prediction with no errors.
+```{r echo=FALSE}
+m.pt 
+```
+
+## Conclusion
+At the outset of this analysis I anticipated accuracy issues due to subtle variations in the variable values that define the exercises and the "correctness" of their execution. Subsequent cleaning and fitting indicated otherwise, backed up by near perfect cross-validation results. 
+Unlike the "real world" this analysis will be scored against results that will validate, or invalidate, predictions based on my work.
+In any case, this exercise highlights the potential for error introduced at every step of the process, reminding me that no decision can be arbitrary as the penalty can be disaster.
+
+
+Appendix A: Citation
+==========
+## Human Activity Research web site and data links
+Website:
+http://groupware.les.inf.puc-rio.br/har#sbia_paper_section
+The training data for this project are available here: 
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+The test data are available here: 
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+
+Appendix B: Code
+================
+## Environment Preparation
+### Clean up R environment
+rm(list=ls());
+
+### Environment 
+library(utils);library(caret) 
+
+## Download Training and Testing data
+### Training Data
+url1 <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv";
+download.file(url=url1, destfile="pml-training.csv")
+d.training <- read.csv("pml-training.csv", na.strings = c("NA","NaN"," ","","#DIV/0!"));
+
+### Testing Data
+url2 <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+download.file(url=url2, destfile="pml-testing.csv")
+d.testing <- read.csv("pml-testing.csv", na.strings = c("NA","NaN"," ",""));
+
+## Data Evaluation
+str(d.training);
+summary(d.training);
+str(d.testing);
+summary(d.testing);
+
+## Data Preparation
+
+### Clean the Training and Testing data 
+d.trainna <- d.training[ d.training == 'NA'] <- NA
+d.naind <- which(colSums(is.na(d.training))!=0)
+d.train <- d.training[ , -d.naind]
+d.train <- d.train[,-c(1:7)];
+### Use Training analysis to clean Testing data
+d.test <- d.testing[ , -d.naind]
+d.test <- d.test[,-c(1:7)];
+
+### Split the Training model into Training and Cross-Validation data sets
+set.seed(13287);
+d.ptrain <- createDataPartition (y = d.train$classe, p = .7, list = FALSE);
+d.itrain <- d.train[d.ptrain, ];
+d.vtrain <- d.train[-d.ptrain, ];
+
+## Model Development
+m.rf <- train(classe ~., data = d.itrain, method = "rf", preprocess = c("center","scale"),ntree = 10, tuneLength = 1, prox = TRUE);
+
+## Model Cross-Validation
+m.cf <- confusionMatrix(predict(m.rf, d.vtrain), d.vtrain$classe);
+
+## Test Data Set Prediction
+m.pt <- predict(m.rf, d.test);
+
+### Create Submission Files
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+setwd("C:\\_Coursera/PractMLProject\\SubmissionAnswers")
+
+pml_write_files(m.pt)
+
+
+
+

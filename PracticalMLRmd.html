@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta http-equiv="x-ua-compatible" content="IE=9" >
+
+<title>Practical Machine Learning Prediction Model Assignment</title>
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 12px;
+   margin: 8px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 { 
+   font-size:2.2em; 
+}
+
+h2 { 
+   font-size:1.8em; 
+}
+
+h3 { 
+   font-size:1.4em; 
+}
+
+h4 { 
+   font-size:1.0em; 
+}
+
+h5 { 
+   font-size:0.9em; 
+}
+
+h6 { 
+   font-size:0.8em; 
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre {	
+   margin-top: 0;
+   max-width: 95%;
+   border: 1px solid #ccc;
+   white-space: pre-wrap;
+}
+
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code.r, code.cpp {
+   background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * { 
+      background: transparent !important; 
+      color: black !important; 
+      filter:none !important; 
+      -ms-filter: none !important; 
+   }
+
+   body { 
+      font-size:12pt; 
+      max-width:100%; 
+   }
+       
+   a, a:visited { 
+      text-decoration: underline; 
+   }
+
+   hr { 
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote { 
+      padding-right: 1em; 
+      page-break-inside: avoid; 
+   }
+
+   tr, img { 
+      page-break-inside: avoid; 
+   }
+
+   img { 
+      max-width: 100% !important; 
+   }
+
+   @page :left { 
+      margin: 15mm 20mm 15mm 10mm; 
+   }
+     
+   @page :right { 
+      margin: 15mm 10mm 15mm 20mm; 
+   }
+
+   p, h2, h3 { 
+      orphans: 3; widows: 3; 
+   }
+
+   h2, h3 { 
+      page-break-after: avoid; 
+   }
+}
+
+</style>
+
+
+
+
+
+</head>
+
+<body>
+<h1>Practical Machine Learning Prediction Model Assignment</h1>
+
+<h2>Detect Deviation in Execution of Physical Exercises</h2>
+
+<p>Run code in background (hidden). Code is available in Appendix B</p>
+
+<pre><code>## Loading required package: lattice
+## Loading required package: ggplot2
+## Loading required package: randomForest
+## randomForest 4.6-10
+## Type rfNews() to see new features/changes/bug fixes.
+</code></pre>
+
+<h2>Synopsis</h2>
+
+<p>The goal of this project is to create a data mining model that can predict the accuracy, and presumed quality, of various physical exercises. Test data is derived from exercises performed by a group of 6 generally non-athletic participants, performing barbell lifts in 5 different ways, one of which is indicated as &ldquo;correct&rdquo;, 4 of which are indicated as &ldquo;incorrect&rdquo; as a result of a deliberate deviation from the form defined by professional athletic trainers as &ldquo;correct&rdquo;. The participants were fitted with three-axis sensors on the belt, forearm, arm, and dumbell. Output of the sensors was recorded as the exercises were executed.</p>
+
+<p>Six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions.
+Class A corresponds to the specified execution of the exercise, while the other 4 classes correspond to common mistakes. 
+Class A: Exactly according to the specification.
+Class B: Throwing the elbows to the front.
+Class C: Lifting the dumbbell only halfway.
+Class D: Lowering the dumbbell only halfway.
+Class E: Throwing the hips to the front.</p>
+
+<p>Participants were supervised by an experienced weight lifter to make sure the execution complied to the manner they were supposed to simulate. 
+The exercises were performed by six male participants aged between 20-28 years, with little weight lifting experience. </p>
+
+<p>Data for this project was obtained from the &ldquo;Wearable Computing: Accelerometers&#39; Data Classification of Body Postures and Movements&rdquo; study conducted by the Human Activity Research group. Data and more information is available on their website at: <a href="http://groupware.les.inf.puc-rio.br/har">http://groupware.les.inf.puc-rio.br/har</a></p>
+
+<h2>Data Exploration</h2>
+
+<p>Two sets of data are provided by the HAR group, one for training containing 19622 observations of 160 variables, and one for testing containing 20 observations of 160 variables. A quick analysis (via the summary() and str() functions) of the training data revealed a number of columns that had empty strings and NA values, and, in some cases, an extremely high count of NAs. Variables containing a low number of unique values do little more than get in the way and increase processing time so I calculated the percentage of NA values compared to the total number of observations, rounded down a percent for leniency, and arrived at a figure of 95% NAs as the threshold for removing a variable from the training data. It is possible that the few hundred non-NA values could have a positive impact on the overal model accuracy so, if the model&#39;s accuracy is insufficient to correctly predict the classes of the test data, I will revisit this decision.
+The training data was divided into a random 70% set for model training and a 30% set for cross-validating the model. The final training data set consists of 13737 observations of 60 variables. The cross-validation data set consists of 5885 observations of 60 variables.
+Due to the large number of variables I have deliberately limited the graphics in this analysis. Selection of variables to display would be totally random and somewhat meaningless without visualization of all variables in the same manner.</p>
+
+<h2>Model Selection</h2>
+
+<p>As this is generally a &ldquo;classification&rdquo; exercise, I chose to use a Random Forest algorithm to create the final mining model. I used the &ldquo;caret&rdquo; package as it combines a lot of analytics functionality into a very small amount of coding and provides a large result set by which to evaluate the model accuracy. Given the number of observations, I chose to set the optional parameters fairly low to keep the processing time short. I will revisit this decision if the accuracy of the model is impacted.</p>
+
+<h2>Model Evaluation and Cross-validation</h2>
+
+<h3>Model Evaluation</h3>
+
+<p>The &ldquo;train&rdquo; function of the &ldquo;caret&rdquo; package completes in relative short order and provides the output shown in the figure below. The Accuracy is quite high and the Accuracy Standard Deviation is quite low indicating the model fit the training sample well.</p>
+
+<h3>Figure 1. Model Fit Results</h3>
+
+<p>These results indicate a perfect fit (Accuracy = 1) and a very low standard of deviation (Accuracy SD = 0.002). &ldquo;Perfect&rdquo; always raises suspicion so I will be watching for errors in the prediction using the testing data.</p>
+
+<pre><code>## Random Forest 
+## 
+## 13737 samples
+##    52 predictor
+##     5 classes: &#39;A&#39;, &#39;B&#39;, &#39;C&#39;, &#39;D&#39;, &#39;E&#39; 
+## 
+## No pre-processing
+## Resampling: Bootstrapped (25 reps) 
+## 
+## Summary of sample sizes: 13737, 13737, 13737, 13737, 13737, 13737, ... 
+## 
+## Resampling results
+## 
+##   Accuracy  Kappa  Accuracy SD  Kappa SD
+##   1         1      0.002        0.003   
+## 
+## Tuning parameter &#39;mtry&#39; was held constant at a value of 7
+## 
+</code></pre>
+
+<h3>Model Cross-validation</h3>
+
+<p>Cross validation prediction was run on the cross-validation data set using the Random Forest model trained on the training data set. The results are quite good, indicated by the small number of out-of-sample errors in the exercise Classes and Accuracy at 0.991, very slightly below the model fit results. This is likely due to the stringent oversight of the study participants while performing the exercises, creating a clear distinction between the &ldquo;correct&rdquo; method and the &ldquo;incorrect&rdquo; methods.</p>
+
+<h3>Figure 2. Cross-Validation Results</h3>
+
+<p>Confusion Matrix using the Random Forest predition model and the cross-validation training data set</p>
+
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    A    B    C    D    E
+##          A 1671    7    1    0    0
+##          B    1 1121    7    0    2
+##          C    0   10 1015   15    3
+##          D    1    0    2  949    1
+##          E    1    1    1    0 1076
+## 
+## Overall Statistics
+##                                         
+##                Accuracy : 0.991         
+##                  95% CI : (0.988, 0.993)
+##     No Information Rate : 0.284         
+##     P-Value [Acc &gt; NIR] : &lt;2e-16        
+##                                         
+##                   Kappa : 0.989         
+##  Mcnemar&#39;s Test P-Value : NA            
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity             0.998    0.984    0.989    0.984    0.994
+## Specificity             0.998    0.998    0.994    0.999    0.999
+## Pos Pred Value          0.995    0.991    0.973    0.996    0.997
+## Neg Pred Value          0.999    0.996    0.998    0.997    0.999
+## Prevalence              0.284    0.194    0.174    0.164    0.184
+## Detection Rate          0.284    0.190    0.172    0.161    0.183
+## Detection Prevalence    0.285    0.192    0.177    0.162    0.183
+## Balanced Accuracy       0.998    0.991    0.992    0.992    0.997
+</code></pre>
+
+<h2>Prediction on Test Data Set</h2>
+
+<p>The Random Forest prediction model was used to predict the &ldquo;Class&rdquo; of each of the 20 data samples in the Testing data set. All samples resulted in a single Class prediction with no errors.</p>
+
+<pre><code>##  [1] B A B A A E D B A A B C B A E E A B B B
+## Levels: A B C D E
+</code></pre>
+
+<h2>Conclusion</h2>
+
+<p>At the outset of this analysis I anticipated accuracy issues due to subtle variations in the variable values that define the exercises and the &ldquo;correctness&rdquo; of their execution. Subsequent cleaning and fitting indicated otherwise, backed up by near perfect cross-validation results. 
+Unlike the &ldquo;real world&rdquo; this analysis will be scored against results that will validate, or invalidate, predictions based on my work.
+In any case, this exercise highlights the potential for error introduced at every step of the process, reminding me that no decision can be arbitrary as the penalty can be disaster.</p>
+
+<h1>Appendix A: Citation</h1>
+
+<h2>Human Activity Research web site and data links</h2>
+
+<p>Website:
+<a href="http://groupware.les.inf.puc-rio.br/har#sbia_paper_section">http://groupware.les.inf.puc-rio.br/har#sbia_paper_section</a>
+The training data for this project are available here: 
+<a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv</a>
+The test data are available here: 
+<a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv</a></p>
+
+<h1>Appendix B: Code</h1>
+
+<h2>Environment Preparation</h2>
+
+<h3>Clean up R environment</h3>
+
+<p>rm(list=ls());</p>
+
+<h3>Environment</h3>
+
+<p>library(utils);library(caret) </p>
+
+<h2>Download Training and Testing data</h2>
+
+<h3>Training Data</h3>
+
+<p>url1 &lt;- &ldquo;<a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv</a>&rdquo;;
+download.file(url=url1, destfile=&ldquo;pml-training.csv&rdquo;)
+d.training &lt;- read.csv(&ldquo;pml-training.csv&rdquo;, na.strings = c(&ldquo;NA&rdquo;,&ldquo;NaN&rdquo;,&ldquo; &rdquo;,&ldquo;&rdquo;,&ldquo;#DIV/0!&rdquo;));</p>
+
+<h3>Testing Data</h3>
+
+<p>url2 &lt;- &ldquo;<a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv</a>&rdquo;
+download.file(url=url2, destfile=&ldquo;pml-testing.csv&rdquo;)
+d.testing &lt;- read.csv(&ldquo;pml-testing.csv&rdquo;, na.strings = c(&ldquo;NA&rdquo;,&ldquo;NaN&rdquo;,&ldquo; &rdquo;,&ldquo;&rdquo;));</p>
+
+<h2>Data Evaluation</h2>
+
+<p>str(d.training);
+summary(d.training);
+str(d.testing);
+summary(d.testing);</p>
+
+<h2>Data Preparation</h2>
+
+<h3>Clean the Training and Testing data</h3>
+
+<p>d.trainna &lt;- d.training[ d.training == &#39;NA&#39;] &lt;- NA
+d.naind &lt;- which(colSums(is.na(d.training))!=0)
+d.train &lt;- d.training[ , -d.naind]
+d.train &lt;- d.train[,-c(1:7)];</p>
+
+<h3>Use Training analysis to clean Testing data</h3>
+
+<p>d.test &lt;- d.testing[ , -d.naind]
+d.test &lt;- d.test[,-c(1:7)];</p>
+
+<h3>Split the Training model into Training and Cross-Validation data sets</h3>
+
+<p>set.seed(13287);
+d.ptrain &lt;- createDataPartition (y = d.train$classe, p = .7, list = FALSE);
+d.itrain &lt;- d.train[d.ptrain, ];
+d.vtrain &lt;- d.train[-d.ptrain, ];</p>
+
+<h2>Model Development</h2>
+
+<p>m.rf &lt;- train(classe ~., data = d.itrain, method = &ldquo;rf&rdquo;, preprocess = c(&ldquo;center&rdquo;,&ldquo;scale&rdquo;),ntree = 10, tuneLength = 1, prox = TRUE);</p>
+
+<h2>Model Cross-Validation</h2>
+
+<p>m.cf &lt;- confusionMatrix(predict(m.rf, d.vtrain), d.vtrain$classe);</p>
+
+<h2>Test Data Set Prediction</h2>
+
+<p>m.pt &lt;- predict(m.rf, d.test);</p>
+
+<h3>Create Submission Files</h3>
+
+<p>pml<em>write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0(&ldquo;problem_id</em>&rdquo;,i,&ldquo;.txt&rdquo;)
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+setwd(&ldquo;C:\_Coursera/PractMLProject\SubmissionAnswers&rdquo;)</p>
+
+<p>pml_write_files(m.pt)</p>
+
+</body>
+
+</html>
+
